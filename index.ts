@@ -1,166 +1,83 @@
-// Um array vai ser usado para salvar as naves de forma mais simplificada
-const spaceships = []
-
-/**
- * Funções Principais
- */
-
-function addSpaceship(name: string, pilot: string, crewLimit: number) {
-  const spaceship = {
-    name,
-    pilot,
-    crewLimit,
-    crew: [],
-    inMission: false
-  }
-
-  spaceships.push(spaceship)
-  
-  alert(`A nave ${spaceship.name} foi registrada.`)
+interface UserGithub {
+    id: number,
+    login: string,
+    name: string,
+    bio: string,
+    public_repos: number,
+    repos_url: string,
+    message?: "Not Found"
 }
 
-function findSpaceship(name: string) {
-    let spaceship: {
-      name: string,
-      pilot: string,
-      crewLimit: number,
-      crew: string[],
-      inMission: boolean
-    }
-    
-    spaceship = spaceships.find((ship) => {
-      return ship.name === name
-    });
-    
-    return spaceship
+interface PublicRepos {
+    name: string,
+    description: string,
+    fork: boolean,
+    stargazers_count: number
 }
 
-function addCrewMember(member: string, spaceship: { name: string, crewLimit: number, crew: string[] }) {
-    if (spaceship.crew.length >= spaceship.crewLimit) {
-        alert(`${member} não pode ser adicionado à tripulação. Limite atingido.`)
+const users: UserGithub[] = []
+
+async function fetchUser(username: string) {
+    const api = await fetch(`https://api.github.com/users/${username}`)
+    const user: UserGithub = await api.json()
+
+    if (user.message) {
+        alert('Usuário não encontrado')
     } else {
-        spaceship.crew.push(member);
-
-        alert(`${member} foi adicionado à tripulação da ${spaceship.name}`)
+        users.push(user)
     }
 }
 
-function sendInMission(spaceship: { name: string, crewLimit: number, crew: string[], inMission: boolean }) {
-    if (spaceship.inMission) {
-      alert(`${spaceship.name} não pode ser enviada. Nave já em missão.`)
-    } else if (spaceship.crew.length < Math.floor(spaceship.crewLimit / 3)) {
-      alert(`${spaceship.name} não pode ser enviada. Tripulação insuficiente.`)
+async function UserPublicRepos(username: string) {
+    const user = users.find(user => user.login === username)
+
+    if(typeof user === 'undefined') {
+        alert('Usuário não encontrado')
     } else {
-      spaceship.inMission = true
-  
-      alert(`${spaceship.name} enviada para a missão!`)
+        const response = await fetch(user.repos_url)
+        const repos: PublicRepos[] = await response.json()
+    
+        let message = `id: ${user.id}\n` +
+            `\nlogin: ${user.login}` +
+            `\nNome: ${user.name}` +
+            `\nBio: ${user.bio}` +
+            `\nRepositórios públicos: ${user.public_repos}`
+
+        repos.forEach(repo => {
+        message += `\nNome: ${repo.name}` +
+            `\nDescrição: ${repo.description}` +
+            `\nEstrelas: ${repo.stargazers_count}` +
+            `\nÉ um fork: ${repo.fork ? 'Sim' : 'Não'}\n`
+        })
+
+    alert(message)
     }
 }
 
-function firstMenuOption() {
-    const name = prompt('Qual é o nome da nave a ser registrada?')
-    const pilot = prompt(`Qual é o nome do piloto da ${name}`)
-    const crewLimit = Number.parseInt(prompt(`Quantos tripulantes a ${name} suporta?`))
-  
-    const confirmation = confirm(`Confirma o registro da nave ${name}?\nPiloto: ${pilot}\nTamanho da Tripulação: ${crewLimit}`)
-  
-    if (confirmation) {
-      addSpaceship(name, pilot, crewLimit)
-    }
-}
+function AllUsers(){
+    let message = 'Usuários:\n'
 
-function secondMenuOption() {
-    const member = prompt('Qual é o nome do tripulante?')
-    const spaceshipName = prompt(`Para qual nave ${member} deverá ser designado?`)
-  
-    const spaceship = findSpaceship(spaceshipName)
-  
-    if (spaceship) {
-      const confirmation = confirm(`Confirma a inclusão de ${member} na tripulação da ${spaceship.name}?`)
-  
-      if (confirmation) {
-        addCrewMember(member, spaceship)
-      }
-    }
-}
+    users.forEach(user => {
+    message += `\n${user.login}`
 
-function thirdMenuOption() {
-    const spaceshipName = prompt('Qual é o nome da nave a ser enviada?')
-  
-    const spaceship = findSpaceship(spaceshipName);
-  
-    if (spaceship) {
-      const confirmation = confirm(`Confirma e envio da ${spaceship.name} na missão?`)
-  
-      if (confirmation) {
-        sendInMission(spaceship)
-      }
-    }
-}
-
-function fourthMenuOption() {
-    let list = 'Naves Registradas:\n'
-  
-    spaceships.forEach((spaceship: {
-      name: string,
-      pilot: string,
-      crewLimit: number,
-      crew: string[],
-      inMission: boolean
-    }) => {
-      list += `
-        Nave: ${spaceship.name}
-        Piloto: ${spaceship.pilot}
-        Em missão? ${spaceship.inMission ? 'Sim' : 'Não'}
-        Tamanho Máximo da Triuplação: ${spaceship.crewLimit}
-        Tripulantes: ${spaceship.crew.length}
-      `
-  
-      spaceship.crew.forEach(member => {
-        list += `    - ${member}\n`
-      })
-  
     })
-  
-    alert(list)
+
+    alert(message)
 }
 
-/**
- * Menu
- */
-
-let userOption = 0;
-
-while (userOption !== 5) {
-  const menu = `Painel Principal
-    1 - Registrar uma nova nave
-    2 - Adicionar membro da tripulação
-    3 - Enviar nave em missão
-    4 - Listar naves registradas
-    5 - Encerrar
-  `
-
-  userOption = Number.parseInt(prompt(menu))
-
-  switch (userOption) {
-    case 1:
-      firstMenuOption()
-      break
-    case 2:
-      secondMenuOption()
-      break
-    case 3:
-      thirdMenuOption()
-      break
-    case 4:
-      fourthMenuOption()
-      break
-    case 5:
-      alert('Encerrando o sistema...')
-      break
-    default:
-      alert('Opção inválida! Retornando ao painel principal...')
-      break;
-  }
+function AllPublicRepos() {
+    const repos = users.reduce((accumulator, user) => (accumulator + user.public_repos), 0)
+    alert(`O grupo possui ${repos} repositórios públicos!`)
 }
 
+function showTopFive() {
+    const topFive = users.slice().sort((a, b) => b.public_repos - a.public_repos).slice(0,5)
+
+    let message = 'Top 5 usuários com mais repositórios públicos:\n'
+
+    topFive.forEach((user, index) => {
+        message += `\n${index + 1} - ${user.login}: ${user.public_repos} repositórios`
+    })
+
+    alert(message)
+}
